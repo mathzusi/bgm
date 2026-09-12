@@ -65,20 +65,34 @@ body {
 }
 
 
-/* 曲名 */
+/* 曲選択 */
 
-.song-name {
+.song-select-area {
     margin-top: 24px;
     margin-bottom: 30px;
+}
 
-    text-align: center;
+.song-select {
+    width: 100%;
 
-    font-size: 18px;
-    font-weight: 500;
+    padding: 12px 14px;
 
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    border: 1px solid #ddd;
+
+    border-radius: 6px;
+
+    background: #fff;
+    color: #222;
+
+    font-size: 14px;
+
+    outline: none;
+
+    cursor: pointer;
+}
+
+.song-select:focus {
+    border-color: #aaa;
 }
 
 
@@ -200,60 +214,6 @@ input[type="range"]::-moz-range-thumb {
 }
 
 
-/* ファイル選択 */
-
-.file-area {
-    margin-top: 28px;
-
-    text-align: center;
-}
-
-
-/* 元のファイル入力を非表示 */
-
-.file-input {
-    display: none;
-}
-
-
-/* ファイル選択ボタン */
-
-.file-button {
-    display: inline-block;
-
-    padding: 10px 18px;
-
-    border: 1px solid #ddd;
-
-    border-radius: 20px;
-
-    background: transparent;
-
-    color: #888;
-
-    font-size: 12px;
-
-    cursor: pointer;
-
-    transition:
-        border-color 0.2s,
-        color 0.2s,
-        background 0.2s;
-}
-
-.file-button:hover {
-    border-color: #aaa;
-
-    color: #555;
-
-    background: #fafafa;
-}
-
-.file-button:active {
-    background: #f0f0ee;
-}
-
-
 /* スマホ */
 
 @media (max-width: 500px) {
@@ -277,11 +237,29 @@ input[type="range"]::-moz-range-thumb {
     <p class="title">BGM PLAYER</p>
 
 
-    <div
-        class="song-name"
-        id="songName"
-    >
-        BGMを選択してください
+    <!-- 曲選択 -->
+
+    <div class="song-select-area">
+
+        <select
+            id="songSelect"
+            class="song-select"
+        >
+
+            <option value="keepout.mp3">
+                KEEPOUT
+            </option>
+
+            <option value="2025aka.mp3">
+                2025赤
+            </option>
+
+            <option value="fastep.mp3">
+                FASTEP
+            </option>
+
+        </select>
+
     </div>
 
 
@@ -352,27 +330,6 @@ input[type="range"]::-moz-range-thumb {
     </div>
 
 
-    <!-- ファイル選択 -->
-
-    <div class="file-area">
-
-        <label
-            for="fileInput"
-            class="file-button"
-        >
-            BGMを選択
-        </label>
-
-        <input
-            type="file"
-            id="fileInput"
-            class="file-input"
-            accept="audio/*"
-        >
-
-    </div>
-
-
 </div>
 
 
@@ -398,51 +355,66 @@ const duration =
 const volume =
     document.getElementById("volume");
 
-const fileInput =
-    document.getElementById("fileInput");
-
-const songName =
-    document.getElementById("songName");
+const songSelect =
+    document.getElementById("songSelect");
 
 
 
 /* =========================
-   常にループ
+   BGM一覧
+========================= */
+
+const bgmFolder = "bgm/";
+
+
+
+/* =========================
+   初期設定
 ========================= */
 
 audio.loop = true;
 
+audio.volume = volume.value;
+
+audio.src =
+    bgmFolder +
+    songSelect.value;
+
 
 
 /* =========================
-   ファイル選択
+   曲選択
 ========================= */
 
-fileInput.addEventListener(
+songSelect.addEventListener(
     "change",
     () => {
 
-        const file =
-            fileInput.files[0];
+        const wasPlaying =
+            !audio.paused;
 
-        if (!file) return;
+        audio.pause();
 
-
-        const url =
-            URL.createObjectURL(file);
-
-
-        audio.src = url;
-
-
-        songName.textContent =
-            file.name;
-
+        audio.src =
+            bgmFolder +
+            songSelect.value;
 
         audio.load();
 
-
         audio.currentTime = 0;
+
+        playButton.textContent =
+            "▶";
+
+
+        if (wasPlaying) {
+
+            audio.play();
+
+            playButton.textContent =
+                "Ⅱ";
+
+        }
 
     }
 );
@@ -579,14 +551,23 @@ audio.addEventListener(
 function formatTime(seconds) {
 
     if (isNaN(seconds)) {
+
         return "0:00";
+
     }
 
+
     const minutes =
-        Math.floor(seconds / 60);
+        Math.floor(
+            seconds / 60
+        );
+
 
     const secondsPart =
-        Math.floor(seconds % 60);
+        Math.floor(
+            seconds % 60
+        );
+
 
     return (
         minutes +
