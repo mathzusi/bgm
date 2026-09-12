@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>BGM Player</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background: #f5f5f3;
+    color: #222;
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Helvetica Neue",
+        Arial,
+        sans-serif;
+}
+
+
+/* プレイヤー */
+
+.player {
+    width: min(90%, 410px);
+
+    padding: 42px 38px;
+
+    background: #fff;
+
+    border: 2px solid #222;
+
+    border-radius: 8px;
+
+    box-shadow: none;
+}
+
+
+/* タイトル */
+
+.title {
+    margin: 0;
+
+    text-align: center;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    letter-spacing: 0.2em;
+
+    color: #888;
+}
+
+
+/* 曲選択 */
+
+.song-select-area {
+    margin-top: 24px;
+    margin-bottom: 30px;
+}
+
+.song-select {
+    width: 100%;
+
+    padding: 12px 45px 12px 14px;
+
+    border: 1px solid #ddd;
+
+    border-radius: 6px;
+
+    background: #fff;
+    color: #222;
+
+    font-size: 14px;
+
+    outline: none;
+
+    cursor: pointer;
+
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.song-select:focus {
+    border-color: #aaa;
+}
+
+
+/* 再生位置 */
+
+.progress-area {
+    width: 100%;
+}
+
+input[type="range"] {
+    width: 100%;
+    height: 4px;
+
+    appearance: none;
+
+    background: #ddd;
+
+    border-radius: 10px;
+
+    outline: none;
+
+    cursor: pointer;
+}
+
+
+/* スライダー */
+
+input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+
+    width: 14px;
+    height: 14px;
+
+    background: #222;
+
+    border-radius: 50%;
+
+    cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+
+    background: #222;
+
+    border: none;
+
+    border-radius: 50%;
+
+    cursor: pointer;
+}
+
+
+/* 時間 */
+
+.time {
+    display: flex;
+    justify-content: space-between;
+
+    margin-top: 8px;
+
+    font-size: 11px;
+
+    color: #999;
+}
+
+
+/* 再生ボタン */
+
+.play-area {
+    display: flex;
+    justify-content: center;
+
+    margin: 30px 0;
+}
+
+.play-button {
+    width: 58px;
+    height: 58px;
+
+    border: none;
+
+    border-radius: 50%;
+
+    background: #222;
+    color: white;
+
+    font-size: 19px;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.15s,
+        background 0.15s;
+}
+
+.play-button:hover {
+    transform: scale(1.05);
+}
+
+.play-button:active {
+    transform: scale(0.97);
+}
+
+
+/* 音量 */
+
+.volume {
+    width: 100%;
+}
+
+.volume-label {
+    margin-bottom: 7px;
+
+    font-size: 11px;
+
+    color: #999;
+}
+
+
+/* スマホ */
+
+@media (max-width: 410px) {
+
+    .player {
+        padding: 35px 25px;
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="player">
+
+    <p class="title">BGM PLAYER</p>
+
+
+    <!-- 曲選択 -->
+
+    <div class="song-select-area">
+
+        <div class="select-wrapper">
+
+        <select
+            id="songSelect"
+            class="song-select"
+        >
+
+            <option value="keepout.mp3">
+                KEEPOUT
+            </option>
+
+            <option value="2025aka.mp3">
+                2025赤
+            </option>
+
+            <option value="fastep.mp3">
+                FASTEP
+            </option>
+
+        </select>
+
+        </div>
+
+    </div>
+
+
+    <audio
+        id="audio"
+        loop
+    ></audio>
+
+
+    <!-- 再生位置 -->
+
+    <div class="progress-area">
+
+        <input
+            type="range"
+            id="progress"
+            min="0"
+            value="0"
+            step="0.1"
+        >
+
+        <div class="time">
+
+            <span id="currentTime">
+                0:00
+            </span>
+
+            <span id="duration">
+                0:00
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- 再生ボタン -->
+
+    <div class="play-area">
+
+        <button
+            class="play-button"
+            id="playButton"
+        >
+            ▶
+        </button>
+
+    </div>
+
+
+    <!-- 音量 -->
+
+    <div class="volume">
+
+        <div class="volume-label">
+            VOLUME
+        </div>
+
+        <input
+            type="range"
+            id="volume"
+            min="0"
+            max="1"
+            step="0.01"
+            value="1"
+        >
+
+    </div>
+
+
+</div>
+
+
+
+<script>
+
+
+const audio =
+    document.getElementById("audio");
+
+const playButton =
+    document.getElementById("playButton");
+
+const progress =
+    document.getElementById("progress");
+
+const currentTime =
+    document.getElementById("currentTime");
+
+const duration =
+    document.getElementById("duration");
+
+const volume =
+    document.getElementById("volume");
+
+const songSelect =
+    document.getElementById("songSelect");
+
+
+
+/* =========================
+   BGM一覧
+========================= */
+
+const bgmFolder = "bgm/";
+
+
+
+/* =========================
+   初期設定
+========================= */
+
+audio.loop = true;
+
+audio.volume = volume.value;
+
+audio.src =
+    bgmFolder +
+    songSelect.value;
+
+
+
+/* =========================
+   曲選択
+========================= */
+
+songSelect.addEventListener(
+    "change",
+    () => {
+
+        const wasPlaying =
+            !audio.paused;
+
+        audio.pause();
+
+        audio.src =
+            bgmFolder +
+            songSelect.value;
+
+        audio.load();
+
+        audio.currentTime = 0;
+
+        playButton.textContent =
+            "▶";
+
+
+        if (wasPlaying) {
+
+            audio.play();
+
+            playButton.textContent =
+                "Ⅱ";
+
+        }
+
+    }
+);
+
+
+
+/* =========================
+   再生 / 一時停止
+========================= */
+
+playButton.addEventListener(
+    "click",
+    () => {
+
+        if (audio.paused) {
+
+            audio.play();
+
+            playButton.textContent =
+                "Ⅱ";
+
+        } else {
+
+            audio.pause();
+
+            playButton.textContent =
+                "▶";
+
+        }
+
+    }
+);
+
+
+
+/* =========================
+   読み込み完了
+========================= */
+
+audio.addEventListener(
+    "loadedmetadata",
+    () => {
+
+        progress.max =
+            audio.duration;
+
+        duration.textContent =
+            formatTime(audio.duration);
+
+        progress.value = 0;
+
+        currentTime.textContent =
+            "0:00";
+
+    }
+);
+
+
+
+/* =========================
+   再生中
+========================= */
+
+audio.addEventListener(
+    "timeupdate",
+    () => {
+
+        progress.value =
+            audio.currentTime;
+
+        currentTime.textContent =
+            formatTime(
+                audio.currentTime
+            );
+
+    }
+);
+
+
+
+/* =========================
+   シークバー
+========================= */
+
+progress.addEventListener(
+    "input",
+    () => {
+
+        audio.currentTime =
+            progress.value;
+
+    }
+);
+
+
+
+/* =========================
+   音量
+========================= */
+
+volume.addEventListener(
+    "input",
+    () => {
+
+        audio.volume =
+            volume.value;
+
+    }
+);
+
+
+
+/* =========================
+   再生終了時
+========================= */
+
+audio.addEventListener(
+    "ended",
+    () => {
+
+        audio.currentTime = 0;
+
+        audio.play();
+
+    }
+);
+
+
+
+/* =========================
+   時間表示
+========================= */
+
+function formatTime(seconds) {
+
+    if (isNaN(seconds)) {
+
+        return "0:00";
+
+    }
+
+
+    const minutes =
+        Math.floor(
+            seconds / 60
+        );
+
+
+    const secondsPart =
+        Math.floor(
+            seconds % 60
+        );
+
+
+    return (
+        minutes +
+        ":" +
+        secondsPart
+            .toString()
+            .padStart(2, "0")
+    );
+
+}
+
+</script>
+
+</body>
+</html>
